@@ -1,0 +1,36 @@
+name: Build
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # TODO: Remove this once we're on a stable release of Spin:
+      - name: Install latest Rust stable toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: wasm32-wasip2
+
+      - name: Install Spin
+        # TODO: Switch to Spin 4.0 when it's available        
+        run: cargo install --locked --git https://github.com/spinframework/spin spin-cli --rev 4a29a18f
+        # uses: fermyon/actions/spin/setup@v1
+        # with:
+        #   version: "v4.0.0"
+
+      - name: Build examples and run tests
+        run: |
+          python -m venv venv
+          source venv/bin/activate
+          pip install componentize-py==0.22.0 http-router==4.1.2 build=1.4.2
+          python -m build
+          pip install dist/spin_sdk-4.0.0-py3-none-any.whl
+          bash run_test.sh
